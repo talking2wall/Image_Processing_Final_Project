@@ -73,10 +73,10 @@ def extract_feature(original_test_image, template_image, test_image, mask, color
         color_mask = [0, 0, 255]
 
     # paint the feature with the desired color
-    a = original_test_image.copy()
-    a[negative_feature_open == 255] = color_mask
+    original_image_copy = original_test_image.copy()
+    original_image_copy[negative_feature_open == 255] = color_mask
     
-    return a
+    return original_image_copy
 
 
 def smooth_image(template_image, test_image):
