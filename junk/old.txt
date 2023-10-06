@@ -1,0 +1,148 @@
+
+#     # load images
+#     template_image = utils.load_image('images/template_pcb.jpg')
+#     test_image = utils.load_image('images/defected_pcb.jpg')
+
+#     # resize images to make them lighter
+#     template_image_resized = utils.image_resize(template_image, height = 400)
+#     test_image_resized = utils.image_resize(test_image, height = 400)
+    
+#     # smooth images and reduce noises
+#     template_image_enhanced, test_image_enhanced = smooth_image(template_image_resized, test_image_resized)
+
+#     # get image dimentions 
+#     height = test_image_enhanced.shape[0]
+#     width = test_image_enhanced.shape[1]
+
+#     # usb feature extraction
+#     mask = create_mask(height, width, [(0,360),(397,400)])
+#     usb = extract_feature(test_image_resized, template_image_enhanced, test_image_enhanced, mask, (90,110), 'red')
+
+#     # capacitors feature extraction
+#     mask = create_mask(height, width, [(0,125),(165,400)])
+#     capacitors = extract_feature(test_image_resized, template_image_enhanced, test_image_enhanced, mask, (115,120), 'green')
+
+#     # chip feature extraction
+#     mask = create_mask(height, width, [(0,160),(280,400)])
+#     chip = extract_feature(test_image_resized, template_image_enhanced, test_image_enhanced, mask, (13,39), 'blue')
+
+#     image_list = []
+
+#     for i in range(0,7):
+#         image_list.append(rotate_image(test_image_resized, i * 30))
+    
+#     #showim([img for img in image_list])
+    
+#     ilist = []
+
+#     for i in range(0,7):
+#         # make a copy of the original image
+#         img = test_image_resized.copy()
+#         tmp = template_image_resized.copy()
+
+#         # resize image
+#         img = image_resize(img, height = 400)
+#         original_test_img = img.copy()
+#         img2 = img.copy()
+
+#         # smooth images and reduce noises
+#         tmp, img = smooth_image(template_image_resized, img)
+
+#         # rotate
+#         img = rotate_image(img, i * 30)
+#         #img = cv.cvtColor(rotate_image(template_image_resized, i * 30), cv.COLOR_BGR2GRAY)
+#         img2 = rotate_image(img2, i * 30)
+
+#         ilist.append(img)
+
+#         # usb feature extraction
+#         mask = create_mask(height, width, [(0,360),(397,400)])
+#         img2 = extract_feature(img2, tmp, img, mask, (90,110), 'red')
+
+#         # capacitors feature extraction
+#         mask = create_mask(height, width, [(0,125),(165,400)])
+#         img2 = extract_feature(img2, tmp, img, mask, (115,120), 'green')
+
+#         # chip feature extraction
+#         mask = create_mask(height, width, [(0,160),(280,400)])
+#         img2 = extract_feature(img2, tmp, img, mask, (13,39), 'blue')
+        
+#         ilist.append(img2)
+
+#     showim([img for img in ilist])
+
+
+
+# def extract_freature_rotated_image():
+#     pass
+
+
+
+
+
+
+# def rotate_image(image, angle):
+
+#     # Get the dimensions of the image
+#     height, width = image.shape[:2]
+
+#     # Calculate the center of the image (the rotation pivot point)
+#     center = (width // 2, height // 2)
+
+#     # Create the rotation matrix
+#     rotation_matrix = cv.getRotationMatrix2D(center, angle, 1.0)
+
+#     # Apply the rotation to the image
+#     rotated_image = cv.warpAffine(image, rotation_matrix, (width, height))
+
+#     # Append the rotated image to the list
+#     return rotated_image
+
+
+# def find_db_contour(image, image_gray):
+#     for i in range(0, 10):
+#         res_img = image.copy()
+#         img_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+#         ret, im = cv.threshold(img_gray, 100 - (i*8), 255, cv.THRESH_BINARY_INV)
+#         contours, hierarchy  = cv.findContours(im, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+#         img = cv.drawContours(res_img, contours, -1, (0,255,75), 1)
+#         showim([res_img])
+
+
+# def extract_feature(original_test_image, template_image, test_image, mask, color_range, output_color):
+
+#     # apply the mask on the image
+#     test_image = test_image + 1
+#     test_image_masked = test_image * mask
+#     template_image = template_image + 1
+#     template_image_masked = template_image * mask
+    
+#     # extract the usb feature
+#     feature_test = cv.inRange(test_image_masked, color_range[0], color_range[1])
+#     feature_template = cv.inRange(template_image_masked, color_range[0], color_range[1])
+
+#     # enhance usb feature quality
+#     kernel = np.ones((3,3))
+#     feature_test_close = cv.morphologyEx(feature_test, cv.MORPH_CLOSE, kernel)
+#     feature_template_close = cv.morphologyEx(feature_template, cv.MORPH_CLOSE, kernel)
+
+#     # test & template images subtraction
+#     negative_feature = feature_template_close - feature_test_close
+
+#     # enhance usb feature quality
+#     kernel = np.ones((7,7))
+#     negative_feature_open = cv.morphologyEx(negative_feature, cv.MORPH_CLOSE, kernel)
+    
+#     # switch colors
+#     if output_color == 'red':
+#         color_mask = [255, 0, 0]
+#     elif output_color == 'green':
+#          color_mask = [0, 255, 0]
+#     else:
+#         color_mask = [0, 0, 255]
+
+#     # paint the feature with the desired color
+#     original_image_copy = original_test_image.copy()
+#     original_image_copy[negative_feature_open == 255] = color_mask
+    
+#     return original_image_copy
